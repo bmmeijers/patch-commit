@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Edit JSON File</title>
+    <script type="module">
+        import { fetchRepos, fetchFile, updateFile } from './script.js';
+
+        document.addEventListener('DOMContentLoaded', fetchRepos);
+        document.getElementById('repoSelect').addEventListener('change', fetchFile);
+        document.getElementById('fileSelect').addEventListener('change', fetchFile);
+        document.getElementById('commitButton').addEventListener('click', updateFile);
+    </script>
+</head>
+
+<body>
+    <fieldset>
+        <label for="repoSelect">Select Repository:</label>
+        <select id="repoSelect"></select><br>
+
+        <label for="fileSelect">Select File:</label>
+        <select id="fileSelect"></select><br>
+        <button id="loadFileButton">Load File</button>
+    </fieldset>
+    <fieldset>
+        <textarea id="fileContent" rows="20" cols="100"></textarea><br>
+        <input type="text" id="commitMessage" placeholder="Commit message">
+        <button id="commitButton">Patch + Commit</button>
+        <p>Latest Commit Hash: <span id="commitHash">...</span></p>
+    </fieldset>
+</body>
+
+</html>

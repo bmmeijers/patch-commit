@@ -67,6 +67,7 @@ export async function fetchFile(repo, file) {
     originalContent = data;
     document.getElementById('fileContent').value = JSON.stringify(originalContent, null, 2);
     document.getElementById('commitHash').innerText = currentHash;
+    document.getElementById('selectedFile').innerText = url;
 }
 
 /**

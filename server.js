@@ -101,7 +101,7 @@ app.get('/', (req, res) => {
             out.push(`<li><a href="${href}">${href}</a>`)
         }
     }
-    res.write(`<!doctype html><html><ul>${out.join("\n")}</ul></html>`)
+    res.write(`<!doctype html><html><h1>Patch+Commit</h1><h2>JSON Files</h2><ul>${out.join("\n")}</ul><h2>Test client</h2><ul><li><a href="./client/">Test client</a></li></ul></html>`)
     res.end()
     // const sanitizedRepos = Object.entries(repositories).reduce((acc, [repoName, repoData]) => {
     //     repoName
@@ -152,43 +152,45 @@ app.get('/repos/:repo/items/{*filename}', async (req, res) => {
 });
 
 // PATCH: Apply JSON Patch only if ETag matches
-app.patch('/repos/:repo/items/{*filename}', async (req, res) => {
-    let { repo, filename } = req.params;
-    // const filename = req.params[0]; // Capture full relative file path
-    const { patch, message } = req.body;
-    const clientETag = req.headers['if-match'];
+app.patch(
+    '/repos/:repo/items/{*filename}',
+    async (req, res) => {
+        let { repo, filename } = req.params;
+        const message = req.query.message; // the commit message as ?message=...
+        const patch = req.body;
+        const clientETag = req.headers['if-match'];
 
-    filename = filename.join("/")
-    if (!repositories[repo] || !repositories[repo].files.includes(filename)) {
-        return res.status(404).send('File not found');
-    }
-    if (!patch || !message || !clientETag) {
-        return res.status(400).send('Patch, commit message, and If-Match header required');
-    }
-
-    const filePath = path.join(repositories[repo].path, filename);
-    try {
-        let oldContent = JSON.parse(await fs.readFile(filePath, 'utf-8'));
-        const log = await repositories[repo].git.log({ maxCount: 1 });
-        const latestHash = log.latest?.hash || 'No commit found';
-
-        if (clientETag !== latestHash) {
-            return res.status(412).send({ status: 'precondition failed', latestHash });
+        filename = filename.join("/")
+        if (!repositories[repo] || !repositories[repo].files.includes(filename)) {
+            return res.status(404).send('File not found');
+        }
+        if (!patch || !message || !clientETag) {
+            return res.status(400).send('Patch, commit message, and If-Match header required');
         }
 
-        let newContent = applyPatch(oldContent, patch).newDocument;
-        await fs.writeFile(filePath, JSON.stringify(newContent, null, 2), 'utf-8');
-        await repositories[repo].git.add(filePath).commit(message);
+        const filePath = path.join(repositories[repo].path, filename);
+        try {
+            let oldContent = JSON.parse(await fs.readFile(filePath, 'utf-8'));
+            const log = await repositories[repo].git.log({ maxCount: 1 });
+            const latestHash = log.latest?.hash || 'No commit found';
 
-        const updatedLog = await repositories[repo].git.log({ maxCount: 1 });
-        const updatedHash = updatedLog.latest?.hash || 'No commit found';
+            if (clientETag !== latestHash) {
+                return res.status(412).send({ status: 'precondition failed', latestHash });
+            }
 
-        res.set('ETag', updatedHash);
-        res.status(200).send({ status: 'success' });
-    } catch (error) {
-        res.status(500).send('Error committing file');
-    }
-});
+            let newContent = applyPatch(oldContent, patch).newDocument;
+            await fs.writeFile(filePath, JSON.stringify(newContent, null, 2), 'utf-8');
+            await repositories[repo].git.add(filePath).commit(message);
+
+            const updatedLog = await repositories[repo].git.log({ maxCount: 1 });
+            const updatedHash = updatedLog.latest?.hash || 'No commit found';
+
+            res.set('ETag', updatedHash);
+            res.status(200).send({ status: 'success' });
+        } catch (error) {
+            res.status(500).send('Error committing file');
+        }
+    });
 
 // Start the server
 const PORT = 3000;

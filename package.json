@@ -6,6 +6,7 @@
     "@types/bun": "latest"
   },
   "dependencies": {
+    "@allmaps/annotation": "^1.0.0-beta.30",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "fast-json-patch": "^3.1.1",

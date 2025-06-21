@@ -96,7 +96,7 @@ app.get('/', (req, res) => {
     let out = []
     for (const repo of Object.keys(repositories)) {
         console.log(repo)
-        for (const fileName of repositories[repo].files) {
+        for (const fileName of repositories[repo].files.sort()) {
             let href = `./repos/${repo}/items/${fileName}`
             out.push(`<li><a href="${href}">${href}</a>`)
         }
@@ -193,7 +193,7 @@ app.patch(
     });
 
 // Start the server
-const PORT = 3000;
+const PORT = 3001;
 const server = app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
 
 server.on('error', (err) => {
